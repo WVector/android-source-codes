@@ -17,7 +17,9 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 ```
 它相较于直接在 style.xml 中定义样式的好处就是不会有一个 scrim（不知道怎么翻译好，就是那个半透明的遮罩）。但只做这个工作就会导致下面这个情况：
 <br>
-![Figure 1.]()
+<br>
+![Figure 1.](https://github.com/unixzii/android-source-codes/raw/master/UnderstandingFitsSystemWindows/assets/1.png)
+<br>
 <br>
 内容与状态栏区域重叠了！通常，大多数人会在布局中加一个：
 ```xml
@@ -84,7 +86,9 @@ private boolean fitSystemWindowsInt(Rect insets) {
 
 但是，上述方法的调用时机究竟是什么时候呢，我们可以通过 IDE 中强大的 **Find Usages** 来反向推导一下。最后发现它是由一个名为 `dispatchApplyWindowInsets` 的方法调用的，而且通过参数传了一个 `WindowInsets` 对象，这是什么鬼，我们后面就会讲到。在此之前我们断点打一下，看看这个方法是怎么被调用起来的：
 <br>
-![Figure 2.]()
+<br>
+![Figure 2.](https://github.com/unixzii/android-source-codes/raw/master/UnderstandingFitsSystemWindows/assets/2.png)
+<br>
 <br>
 原来是 `ViewRootImpl` 发起的，这个类很重要，实现了很多 View 与 **WindowManager** 的交互，这里 `ViewRootImpl` somehow 拿到了一个 `WindowInsets` 对象，这个对象大家可以看看文档，就是包含了一些系统所占用的区域，**这些区域可以被消耗掉，并且消耗之后返回的是一个全新的对象，这句话请谨记**。
 
@@ -180,7 +184,9 @@ final WindowInsetsCompat setWindowInsets(WindowInsetsCompat insets) {
 
 讲这么多有没有 🌰 呢？当然有，先看下面的效果：
 <br>
-![Figure 3.]()
+<br>
+![Figure 3.](https://github.com/unixzii/android-source-codes/raw/master/UnderstandingFitsSystemWindows/assets/3.png)
+<br>
 <br>
 显然，这是 `CoordinatorLayout` 配合 `CollapsingToolbarLayout` 实现的，但是这里给 `CoordinatorLayout` 加 `fitsSystemWindows` 就不灵了，它会吃掉状态栏的位置，然后画个背景色，我们的图片就不能垫在状态栏底下了，我通过分析各个类（这块真是花了很多时间），发现 `AppBarLayout` 也实现了 `fitsSystemWindows` 的自定义行为（毕竟放在它里面的 `CollapsingToolbarLayout` 有一个 `statusBarScrim` 属性），但是给它加上这个属性以后，图片依然会被挤下去。
 
@@ -216,4 +222,6 @@ protected void onLayout(boolean changed, int left, int top, int right, int botto
 
 那么最后给大家留一个小小的 homework，可否给我们的图片在状态栏的位置加一个 scrim？（hint：可以参考 `NavigationView`）
 
-> 如果你对我的 Android 源码分析系列文章感兴趣，可以点个 star 哦，我会持续不定期更新文章。
+## 推广信息
+
+如果你对我的 Android 源码分析系列文章感兴趣，可以点个 star 哦，我会持续不定期更新文章。
